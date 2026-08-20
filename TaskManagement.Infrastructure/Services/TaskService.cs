@@ -13,19 +13,45 @@ public class TaskService : ITaskService
 
     public TaskService(AppDbContext db) => _db = db;
 
-    public async Task<IEnumerable<TaskResponseDto>> GetAllTasksAsync(string userId, bool isAdmin)
+    public async Task<IEnumerable<TaskResponseDto>> GetAllTasksAsync(
+        string userId, bool isAdmin, TaskFilterDto? filter = null)
     {
         var query = _db.Tasks
             .Include(t => t.AssignedToUser)
             .Include(t => t.Category)
             .AsQueryable();
 
+        // Role-based scope
         if (!isAdmin)
             query = query.Where(t => t.AssignedToUserId == userId);
 
-        return await query.OrderByDescending(t => t.CreatedAt)
-                          .Select(t => MapToDto(t))
-                          .ToListAsync();
+        // ── Server-side filters ───────────────────────────────────────────────
+        if (filter != null)
+        {
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+                query = query.Where(t =>
+                    t.Title.Contains(filter.Search) ||
+                    (t.Description != null && t.Description.Contains(filter.Search)));
+
+            if (!string.IsNullOrWhiteSpace(filter.Status) &&
+                Enum.TryParse<AppTaskStatus>(filter.Status, out var parsedStatus))
+                query = query.Where(t => t.Status == parsedStatus);
+
+            if (!string.IsNullOrWhiteSpace(filter.Priority) &&
+                Enum.TryParse<TaskPriority>(filter.Priority, out var parsedPriority))
+                query = query.Where(t => t.Priority == parsedPriority);
+
+            if (filter.CategoryId.HasValue)
+                query = query.Where(t => t.CategoryId == filter.CategoryId);
+
+            if (!string.IsNullOrWhiteSpace(filter.AssignedToUserId))
+                query = query.Where(t => t.AssignedToUserId == filter.AssignedToUserId);
+        }
+
+        return await query
+            .OrderByDescending(t => t.CreatedAt)
+            .Select(t => MapToDto(t))
+            .ToListAsync();
     }
 
     public async Task<TaskResponseDto?> GetTaskByIdAsync(int id, string userId, bool isAdmin)
@@ -115,18 +141,13 @@ public class TaskService : ITaskService
         return new TaskCountDto(pending, inProgress, completed, pending + inProgress + completed);
     }
 
+    // ── helper ────────────────────────────────────────────────────────────────
     private static TaskResponseDto MapToDto(TaskItem t) => new(
-        t.Id,
-        t.Title,
-        t.Description,
-        t.Status.ToString(),
-        t.Priority.ToString(),
-        t.DueDate,
-        t.CreatedAt,
-        t.UpdatedAt,
+        t.Id, t.Title, t.Description,
+        t.Status.ToString(), t.Priority.ToString(),
+        t.DueDate, t.CreatedAt, t.UpdatedAt,
         t.AssignedToUserId,
         t.AssignedToUser != null ? $"{t.AssignedToUser.FirstName} {t.AssignedToUser.LastName}" : null,
-        t.CategoryId,
-        t.Category?.Name
+        t.CategoryId, t.Category?.Name
     );
 }

@@ -3,12 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Sidebar from './components/Sidebar';
-import LoginPage from './pages/LoginPage';
+import LoginPage     from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
-import TaskListPage from './pages/TaskListPage';
+import TaskListPage  from './pages/TaskListPage';
 import TaskDetailPage from './pages/TaskDetailPage';
-import TaskFormPage from './pages/TaskFormPage';
-import ProfilePage from './pages/ProfilePage';
+import TaskFormPage  from './pages/TaskFormPage';
+import ProfilePage   from './pages/ProfilePage';
+import UsersPage     from './pages/UsersPage';
 import './index.css';
 
 const queryClient = new QueryClient();
@@ -32,39 +33,32 @@ export default function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
             <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <AppLayout><DashboardPage /></AppLayout>
-              </ProtectedRoute>
+              <ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>
             } />
 
             <Route path="/tasks" element={
-              <ProtectedRoute>
-                <AppLayout><TaskListPage /></AppLayout>
-              </ProtectedRoute>
+              <ProtectedRoute><AppLayout><TaskListPage /></AppLayout></ProtectedRoute>
             } />
 
             <Route path="/tasks/new" element={
-              <ProtectedRoute>
-                <AppLayout><TaskFormPage /></AppLayout>
-              </ProtectedRoute>
+              <ProtectedRoute><AppLayout><TaskFormPage /></AppLayout></ProtectedRoute>
             } />
 
             <Route path="/tasks/:id" element={
-              <ProtectedRoute>
-                <AppLayout><TaskDetailPage /></AppLayout>
-              </ProtectedRoute>
+              <ProtectedRoute><AppLayout><TaskDetailPage /></AppLayout></ProtectedRoute>
             } />
 
             <Route path="/tasks/:id/edit" element={
-              <ProtectedRoute>
-                <AppLayout><TaskFormPage /></AppLayout>
-              </ProtectedRoute>
+              <ProtectedRoute><AppLayout><TaskFormPage /></AppLayout></ProtectedRoute>
             } />
 
             <Route path="/profile" element={
-              <ProtectedRoute>
-                <AppLayout><ProfilePage /></AppLayout>
-              </ProtectedRoute>
+              <ProtectedRoute><AppLayout><ProfilePage /></AppLayout></ProtectedRoute>
+            } />
+
+            {/* Admin-only routes */}
+            <Route path="/admin/users" element={
+              <ProtectedRoute requireAdmin><AppLayout><UsersPage /></AppLayout></ProtectedRoute>
             } />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

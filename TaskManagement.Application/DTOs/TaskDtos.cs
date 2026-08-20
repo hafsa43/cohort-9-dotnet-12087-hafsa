@@ -42,3 +42,12 @@ public record TaskCountDto(
     int Completed,
     int Total
 );
+
+public record TaskFilterDto(
+    string? Search       = null,
+    string? Status       = null,
+    string? Priority     = null,
+    int?    CategoryId   = null,
+    string? AssignedToUserId = null
+);
+

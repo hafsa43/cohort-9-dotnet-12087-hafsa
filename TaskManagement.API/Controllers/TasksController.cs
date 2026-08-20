@@ -20,8 +20,8 @@ public class TasksController : ControllerBase
         _logger = logger;
     }
 
-    private string UserId   => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-    private bool   IsAdmin  => User.IsInRole("Admin");
+    private string UserId  => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+    private bool   IsAdmin => User.IsInRole("Admin");
 
     /// <summary>Get task dashboard counts</summary>
     [HttpGet("counts")]
@@ -31,12 +31,24 @@ public class TasksController : ControllerBase
         return Ok(counts);
     }
 
-    /// <summary>Get all tasks (admin = all, user = own)</summary>
+    /// <summary>
+    /// Get all tasks with optional server-side filters.
+    /// Query params: search, status, priority, categoryId, assignedToUserId
+    /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search          = null,
+        [FromQuery] string? status          = null,
+        [FromQuery] string? priority        = null,
+        [FromQuery] int?    categoryId      = null,
+        [FromQuery] string? assignedToUserId = null)
     {
-        _logger.LogInformation("Fetching tasks for user {UserId}, isAdmin={IsAdmin}", UserId, IsAdmin);
-        var tasks = await _tasks.GetAllTasksAsync(UserId, IsAdmin);
+        _logger.LogInformation(
+            "Fetching tasks for user {UserId}, isAdmin={IsAdmin}, search={Search}, status={Status}",
+            UserId, IsAdmin, search, status);
+
+        var filter = new TaskFilterDto(search, status, priority, categoryId, assignedToUserId);
+        var tasks  = await _tasks.GetAllTasksAsync(UserId, IsAdmin, filter);
         return Ok(tasks);
     }
 
